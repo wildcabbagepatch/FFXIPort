@@ -6,7 +6,9 @@
 * Licensed under the GNU General Public License v3.0 only; see LICENSE.
 *
 * Builds the filtered row list of a tab (via catalog.filter, cached) and
-* draws it as a scrolling table: destination, expansion, status.
+* draws it as a scrolling table: star, destination, expansion, status.
+* 1.2.0: expansion filter in R.list; drawn favourite star (ui/widgets.lua);
+* row selection colour from the theme.
 * Availability comes only from model.lua (true / false / nil); the current
 * zone is used only for the Home Point "(here)" marker and the Survival
 * Guide "Here" status wording (Milestone 4.1).
@@ -14,6 +16,7 @@
 --]]
 
 local imgui = require('imgui')
+local WG    = require('ffxiport.ui.widgets')
 
 local R = {}
 
@@ -59,9 +62,15 @@ end
 -- category order, each filtered exactly like its own tab (search and "Only
 -- what I can use" via catalog.filter). Its cache key also contains the
 -- favourites, so starring/unstarring refreshes it at once.
-function R.list(tab, query, onlyUsable, now)
+--
+-- 1.2.0: expansion ('all' or nil = no filter; else base|roz|cop|toau) keeps
+-- only rows of that expansion, in their existing order, on every tab
+-- (including Favorites). It combines with search and "Only what I can use"
+-- as a further AND condition; unlocks and favourites are not touched.
+function R.list(tab, query, onlyUsable, now, expansion)
     local hasData = D.model.hasData()
-    local parts = { query or '', tostring(onlyUsable and hasData), tostring(D.model.revision()) }
+    local exp = (expansion ~= nil and expansion ~= 'all') and expansion or nil
+    local parts = { query or '', tostring(onlyUsable and hasData), tostring(D.model.revision()), tostring(exp) }
 
     if tab == 'fav' then
         parts[#parts + 1] = table.concat(D.config.favourites(), ',')
@@ -93,6 +102,18 @@ function R.list(tab, query, onlyUsable, now)
         end
     else
         list = D.catalog.filter(tab, opts)
+    end
+
+    if exp ~= nil then
+        local kept = {}
+
+        for _, item in ipairs(list) do
+            if item.row.exp == exp then
+                kept[#kept + 1] = item
+            end
+        end
+
+        list = kept
     end
 
     cache[tab] = { key = key, at = now, list = list }
@@ -310,9 +331,15 @@ function R.rowHeight(row, fav)
     return line
 end
 
--- Star button label (hidden unique id per category and id).
+-- Star control id (hidden, unique per category and id).
 function R.starId(row)
-    return '*##ffxiport_fav_' .. tostring(row.tab) .. '_' .. tostring(row.id)
+    return '##ffxiport_fav_' .. tostring(row.tab) .. '_' .. tostring(row.id)
+end
+
+-- Star size: one text line, so it follows the UI scale with the font.
+function R.starSize()
+    local ok, h = pcall(imgui.GetTextLineHeight)
+    return (ok and type(h) == 'number' and h > 0) and h or D.theme.s(14)
 end
 
 -- Draws one row; returns clicked (row selected), starred (star toggled).
@@ -394,20 +421,11 @@ local function drawRow(item, currentZone, selectedKey, fav)
     imgui.TableSetColumnIndex(0)
 
     local isFav   = D.config.isFavourite(row.tab, row.id)
-    local starred = false
+    local starred, hovered = WG.star(R.starId(row), R.starSize(), isFav)
 
-    R.withColors({
-        { ImGuiCol_Button,        { 0, 0, 0, 0 } },
-        { ImGuiCol_ButtonHovered, c.button },
-        { ImGuiCol_ButtonActive,  c.tabSel },
-        { ImGuiCol_Text,          isFav and c.gold or c.muted },
-    }, function ()
-        starred = imgui.SmallButton(R.starId(row)) == true
-
-        if imgui.IsItemHovered() then
-            imgui.SetTooltip(isFav and 'Remove from favourites' or 'Add to favourites')
-        end
-    end)
+    if hovered then
+        imgui.SetTooltip(isFav and 'Remove from favourites' or 'Add to favourites')
+    end
 
     if starred then
         clicked = false -- a star click never selects the row
@@ -434,16 +452,17 @@ function R.draw(tab, list, footer, selectedKey, emptyText)
     local c = D.theme.colors
     local clickedKey, starRow = nil, nil
 
-    -- Selected row: tab-selected gold-brown; hover slightly lighter. Scoped
-    -- to this table and popped even on errors.
+    -- Selected row: the theme's row-selection colour (Classic: the 1.1.0
+    -- gold-brown); hover slightly lighter. Scoped to this table and popped
+    -- even on errors.
     R.withColors({
-        { ImGuiCol_Header,        c.tabSel },
+        { ImGuiCol_Header,        c.rowSel },
         { ImGuiCol_HeaderHovered, c.button },
-        { ImGuiCol_HeaderActive,  c.tabSel },
+        { ImGuiCol_HeaderActive,  c.rowSel },
     }, function ()
         R.guarded(imgui.BeginTable('##ffxiport_rows_' .. tab, 4, flags, { 0, -(footer or 0) }), function ()
             imgui.TableSetupScrollFreeze(0, 1)
-            imgui.TableSetupColumn('##ffxiport_star', ImGuiTableColumnFlags_WidthFixed, textWidth('*') + D.theme.s(16))
+            imgui.TableSetupColumn('##ffxiport_star', ImGuiTableColumnFlags_WidthFixed, R.starSize() + D.theme.s(6))
             imgui.TableSetupColumn('Destination', ImGuiTableColumnFlags_WidthStretch)
             imgui.TableSetupColumn('Expansion', ImGuiTableColumnFlags_WidthFixed, expW)
             imgui.TableSetupColumn('Status', ImGuiTableColumnFlags_WidthFixed, statusW)

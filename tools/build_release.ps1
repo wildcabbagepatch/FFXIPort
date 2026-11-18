@@ -2,8 +2,8 @@
 # GPL-3.0-only, (C) 2026 wildthing.
 #
 # Usage (from the repository root):
-#   powershell -File tools/build_release.ps1 -Name FFXIPort-1.1.0 -Profile install
-#   powershell -File tools/build_release.ps1 -Name FFXIPort-1.1.0-source -Profile source
+#   powershell -File tools/build_release.ps1 -Name FFXIPort-1.2.0 -Profile install
+#   powershell -File tools/build_release.ps1 -Name FFXIPort-1.2.0-source -Profile source
 #
 #   install : what players and server operators need: the Ashita addon, the
 #             server module, README / INSTALL / CHANGELOG / NOTICE / LICENSE and
@@ -34,11 +34,17 @@ if ($Profile -eq 'install') {
     New-Item -ItemType Directory -Force (Join-Path $stage 'server/modules/custom/late') | Out-Null
     Copy-Item (Join-Path $root 'server/modules/custom/late/fpxport.lua') (Join-Path $stage 'server/modules/custom/late/fpxport.lua')
     New-Item -ItemType Directory -Force (Join-Path $stage 'docs') | Out-Null
-    foreach ($d in 'PROVENANCE-M8.md', 'CLEANROOM.md', 'CATALOGUE.md', 'SERVER-MODULE.md', 'PROTOCOL-FPX1.md') {
+    foreach ($d in 'PROVENANCE-M8.md', 'CLEANROOM.md', 'CATALOGUE.md', 'SERVER-MODULE.md', 'PROTOCOL-FPX1.md', 'UI.md') {
         Copy-Item (Join-Path $root "docs/$d") (Join-Path $stage "docs/$d")
     }
 } else {
     foreach ($p in 'client', 'server', 'docs', 'tests', 'tools') { Copy-Item -Recurse (Join-Path $root $p) $stage }
+    Copy-Item (Join-Path $root '.gitignore') $stage
+}
+
+# Never ship local design references or anything else excluded by policy.
+foreach ($banned in 'design-references', 'release') {
+    if (Test-Path (Join-Path $stage $banned)) { throw "refusing to package $banned/" }
 }
 foreach ($f in $topFiles) { Copy-Item (Join-Path $root $f) $stage }
 

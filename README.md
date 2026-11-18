@@ -1,4 +1,4 @@
-# FFXIPort 1.1.0
+# FFXIPort 1.2.0
 
 FFXIPort is a travel addon for **XI: Forever Offline**. It shows a window with
 every Home Point, Survival Guide, Gate Crystal teleport and Runic Portal
@@ -23,20 +23,46 @@ It has two parts that work together:
 
 * Five tabs: **Home Points** (104), **Survival Guides** (77), **Gate
   Crystals** (6), **Runic Portals** (6) and **Favorites**.
-* Search across all tabs; filter to destinations you can use.
+* Search across all tabs; filter to destinations you can use and, new in
+  1.2.0, to one expansion (Original, Rise of the Zilart, Chains of Promathia,
+  Treasures of Aht Urhgan).
+* **Themes (1.2.0):** Classic (the original brown/gold, default), Squad (dark
+  navy with gold, after the XI: Forever Offline Squad window) and Crimson (dark
+  with muted burgundy). Switch with the three dots at the top right of the window.
+* **UI scale (1.2.0):** 70 % to 200 % (text, buttons, rows, spacing) from the
+  small **UI** button next to the dots.
+* **Favourite star (1.2.0):** a drawn star; outline = not a favourite, filled
+  = favourite.
+* **Optional floating button (1.2.0):** a small draggable button (just the
+  button, no panel around it) that opens and closes FFXIPort; off by default
+  (turn it on under **UI**).
 * Unlocks, prices and your gil / CP / Imperial Standing come from the server
   and refresh automatically after login, after reloading the addon and after
   every zone change.
 * Server-authoritative pricing. The price shown is the price charged; if it
   changed in the meantime, the trip is refused and nothing is charged.
-* Favorites and settings (tab, payment method, chat level, window scale) are
-  saved per character.
+* Favorites and settings (tab, payment method, chat level, theme, UI scale,
+  expansion filter, floating button and its position) are saved per character.
 * Quiet chat: by default FFXIPort hides its own protocol traffic and command
   echoes and prints one line per trip.
 * Location hints after some Home Point names: **E** (entrance/exit),
   **A** (Auction House), **M** (Mog House). All 35 were checked by hand against
   what FINAL FANTASY XI displays. They were originally compiled with the help
   of BG-Wiki (see NOTICE.md).
+
+## Screenshots
+
+**Classic — Gate Crystal teleports**
+
+![Classic theme showing Gate Crystal destinations](docs/screenshots/classic.png)
+
+**Squad — UI customization and floating button**
+
+![Squad theme showing UI options, scaling, and the floating button](docs/screenshots/squad.png)
+
+**Crimson — Favorites across travel categories**
+
+![Crimson theme showing saved favorites from multiple travel categories](docs/screenshots/crimson.png)
 
 ## Prices
 
@@ -49,20 +75,36 @@ It has two parts that work together:
 | **Within the same city** (e.g. Southern → Northern San d'Oria, Chateau d'Oraguille → Port San d'Oria, Heavens Tower → Windurst Woods) | **free** | **free** |
 
 Choose the payment method in the window footer ("Pay with:"). Conquest Points
-are those of your current nation. The server operator sets prices in
-`fpxport.lua`.
+are those of your current nation. These are the defaults: **server operators
+can change the prices** (and turn free same-city travel off) in `fpxport.lua`.
+See [docs/SERVER-MODULE.md](docs/SERVER-MODULE.md#changing-prices-server-administrators-120).
+The window always shows the server's current prices; players cannot change them.
 
 ## Requirements
 
 * **Client:** Windows with FINAL FANTASY XI and **Ashita v4**.
 * **Server:** an **XI: Forever Offline** (Phoenix / LandSandBoat-based) server
   where you can install a Lua module. FFXIPort 1.1.0 was tested in game on
-  XI: Forever Offline. The exact Ashita and server builds used were not
+  XI: Forever Offline, and the owner accepted 1.2.0 in game on its final release
+  candidate (rc.2), which 1.2.0 is identical to apart from the version number
+  and documentation. The exact Ashita and server builds used were not
   recorded (see [Known limitations](#known-limitations)).
-* Both parts must come from the **same FFXIPort release**. 1.1.0 speaks only the
-  FPX/1 protocol and does not work with the previous FFXIPort server module.
+* Install both parts from the **same FFXIPort release**. 1.1.0 and 1.2.0 use the
+  same, unchanged FPX/1 protocol, so mixing them should work, but that
+  combination has not been tested. Neither works with the previous FFXIPort
+  server module.
 
 ## Installation
+
+### Via the XI: Forever Offline launcher
+
+FFXIPort is also listed under **OTHER** in the XI: Forever Offline launcher.
+Select **Install** (or **Reinstall / update**), then enable FFXIPort under
+**ADDONS → Addons to load**. The launcher states that the server component
+ships with XI: Forever Offline. The launcher-provided version may be older
+than the latest GitHub release.
+
+### Manual installation
 
 Short version below; full steps in [INSTALL.md](INSTALL.md).
 
@@ -92,8 +134,9 @@ Short version below; full steps in [INSTALL.md](INSTALL.md).
 | `/ffxiport …` | Same as `/port …` |
 
 To travel: select a destination, choose how to pay, press **Teleport**. Locked
-destinations are shown but cannot be used. Star a destination to add it to
-**Favorites**.
+destinations are shown but cannot be used. Click the star to add a destination
+to **Favorites**. Themes, UI scale, the expansion filter and the floating button
+are described in [docs/UI.md](docs/UI.md).
 
 ## Troubleshooting
 
@@ -105,7 +148,9 @@ destinations are shown but cannot be used. Star a destination to add it to
 | Lines starting with `#fpx1` appear in chat | `/port status` should show "foreign: 0". If it doesn't, run `/port chat trace on` and `/port sync`, then report the trace; it shows the packet mode and sender. |
 | "Travel refused: The price has changed" | Prices were refreshed. Check the new price and try again; nothing was charged. |
 | "Payment/travel outcome UNCERTAIN" | Check your gil / CP / IS. The server logged a `CURRENCY INCIDENT` for the operator; please report it. |
-| "N unlocked destination(s) are outside this catalogue's … scope" | Your character unlocked destinations from expansions after Treasures of Aht Urhgan, which 1.1.0 does not list. `/port status` shows their ids. |
+| "N unlocked destination(s) are outside this catalogue's … scope" | Your character unlocked destinations from expansions after Treasures of Aht Urhgan, which FFXIPort does not list. `/port status` shows their ids. |
+| Text does not get bigger with the UI scale | The options popover and `/port status` (line "UI:") say whether text scaling works in your client; sizes and spacing still scale. Please report it. |
+| The floating button is off screen | Open `/port`, then **UI** -> **Reset position**. |
 
 ## Known limitations
 
@@ -118,7 +163,14 @@ destinations are shown but cannot be used. Star a destination to add it to
 * Destinations in Wings of the Goddess, Seekers of Adoulin and later zones are
   not listed ([docs/CATALOGUE.md](docs/CATALOGUE.md)).
 * Works only with the `fpxport.lua` server module of the same release.
-* The window is not covered by automated tests (its layout is unchanged in 1.1.0).
+* **In-game status of 1.2.0:** the owner's in-game acceptance of 1.2.0-rc.2
+  covered the three themes, UI scaling, the expansion filter, favourite stars,
+  the floating button (no outer panel; click and drag), per-character UI
+  settings and existing travel. Not tested in game: changing server prices on
+  a live server, and mixing 1.1.0 and 1.2.0 client and server (same protocol).
+  See [docs/TEST-RESULTS-1.2.0.md](docs/TEST-RESULTS-1.2.0.md).
+* Text scaling uses Ashita's ImGui 1.92 `PushFont(font, size)`. If a client's
+  binding does not allow it, only sizes and spacing scale (reported in the UI).
 
 ## License
 

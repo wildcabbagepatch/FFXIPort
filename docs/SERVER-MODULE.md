@@ -15,7 +15,9 @@ Implements the server side of `docs/PROTOCOL-FPX1.md`:
 | Gate Crystals (`G`, 0–5) | `hasKeyItem(<X>_GATE_CRYSTAL)` | `xi.teleport.destination[xi.teleport.id.<X>]` |
 | Runic Portals (`R`, 1–6) | bit `2^id` of `getTeleport(RUNIC_PORTAL)` | `xi.teleport.destination[xi.teleport.id.<X>_SP]` |
 
-## Travel prices (final, confirmed by the project owner)
+## Travel prices
+
+Defaults (owner-approved; shipped in `fpxport.lua`):
 
 | Category | Gil | Alternative currency |
 |----------|----:|---------------------:|
@@ -24,11 +26,58 @@ Implements the server side of `docs/PROTOCOL-FPX1.md`:
 | Gate Crystal Teleports | 1,000 gil | 100 Conquest Points |
 | Runic Portals | 1,000 gil | 100 Imperial Standing |
 
-* One fixed price per category for every eligible destination
-  (`M.config.prices`). There are no distance/fee multipliers, no key-item
-  discounts (Rhapsody in White) and no key-item exemptions (Captain Wildcat
-  Badge); RC1/RC2 had these and they were removed in RC3.
-* The only exception is **same-city travel, which is free** (next section).
+* One fixed price per category for every eligible destination. There are
+  no distance/fee multipliers, no key-item discounts (Rhapsody in White) and
+  no key-item exemptions (Captain Wildcat Badge); RC1/RC2 had these and they
+  were removed in RC3.
+* **Same-city travel is free** by default (next section).
+
+### Changing prices (server administrators, 1.2.0)
+
+Prices are set on the server only. Players cannot change them; the client has
+no price setting and always shows what the server sends.
+
+1. Open `modules/custom/late/fpxport.lua` on the server and find the block
+   marked `SERVER ADMINISTRATORS: TRAVEL PRICES` near the top (`M.config`):
+
+   ```lua
+   prices =
+   {
+       H = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Home Points
+       S = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Survival Guides
+       G = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Gate Crystal teleports
+       R = { { cur = 'g', amount = 1000 }, { cur = 'i', amount = 100 } }, -- Runic Portals
+   },
+   sameCityFree      = true,
+   ```
+
+2. Change the numbers. Rules:
+   * `cur` is `'g'` (gil) or `'c'` (Conquest Points) for Home Points,
+     Survival Guides and Gate Crystals, and `'g'` (gil) or `'i'` (Imperial
+     Standing) for Runic Portals. These match the payment choices in the
+     player's window.
+   * `amount` is a whole number from 0 to 999,999,999.
+   * Delete a currency's entry to stop accepting that currency for the
+     category. One currency is enough, e.g. `R = { { cur = 'i', amount = 200 } }`.
+   * To make a whole category free, set **every** amount of that category to
+     `0`. Mixing 0 and a non-zero amount in one category is rejected.
+   * `sameCityFree = false` makes same-city trips cost the normal price.
+3. **Restart the map server.** The module reads and validates the prices when
+   it is loaded. (Some LandSandBoat builds re-run changed module files
+   automatically; that path was not tested with FFXIPort, so a restart is the
+   supported way.)
+4. Check the map-server log. An invalid entry produces a line like
+   `[fpxport] CONFIG ERROR prices.H: entry 1: amount must be a whole number from 0 to 999999999. Using the default price for this category.`
+   The affected category then keeps its default price; valid categories use
+   your values. Negative, fractional, too-large, non-numeric, duplicate or
+   disallowed-currency entries are all rejected this way.
+
+Players get the new prices at their next sync (login, zone change, or
+`/port sync`). A player who still sees an old price and presses Teleport is
+refused with "The price has changed", is **not** charged, and gets the new
+prices automatically. Insufficient funds, the expected-price check,
+transaction safety, replay protection and duplicate-charge protection are
+unchanged.
 * The server is authoritative: the snapshot carries every destination's
   offer, and the client shows exactly that. A `GO` carries the price the
   player saw, and any difference is refused with `PRICE` without charging.

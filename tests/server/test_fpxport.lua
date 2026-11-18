@@ -728,6 +728,109 @@ H.describe('transaction outcomes', function()
 end)
 
 -----------------------------------------------------------------------------
+-- 1.2.0: server-configurable prices (M.config.prices, validated by applyConfig)
+-----------------------------------------------------------------------------
+H.describe('configurable prices', function()
+    local logs
+    local function configure(prices, sameCityFree)
+        logs = {}
+        S.log = function(t) logs[#logs + 1] = t end
+        for cat, list in pairs(prices or {}) do S.config.prices[cat] = list end
+        if sameCityFree ~= nil then S.config.sameCityFree = sameCityFree end
+        return S.applyConfig()
+    end
+
+    H.it('the shipped configuration is valid and equals the owner-approved defaults', function()
+        H.eq(configure(), 0)
+        for _, cat in ipairs({ 'H', 'S', 'G', 'R' }) do
+            H.eq(S.encodeOffers(S.active.prices[cat]), S.encodeOffers(S.DEFAULT_PRICES[cat]), cat)
+        end
+        H.eq(S.active.sameCityFree, true)
+    end)
+
+    H.it('custom prices are synchronised and charged', function()
+        H.eq(configure({ H = { { cur = 'g', amount = 2500 }, { cur = 'c', amount = 250 } } }), 0)
+        local p = L.player({ hp = { 9 }, zone = 100 })
+        H.eq(one(p, '1 0e01 SYNC').fields.pH, 'g2500+c250')
+        H.eq(one(p, '1 0e02 GO H 9 c 250').kind, 'T'); H.eq(p.cp, 4750); H.eq(p.gil, 100000)
+    end)
+
+    H.it('a client with the old price is refused (PRICE) and nothing is charged', function()
+        configure({ H = { { cur = 'g', amount = 2500 }, { cur = 'c', amount = 250 } } })
+        local p = L.player({ hp = { 9 } })
+        local r = one(p, '1 0e03 GO H 9 g 1000')
+        H.eq(r.fields.e, 'PRICE'); H.eq(r.fields.need, 'g2500+c250'); H.eq(p.gil, 100000)
+    end)
+
+    H.it('a currency can be removed from a category', function()
+        configure({ R = { { cur = 'g', amount = 500 } } })
+        local p = L.player({ runic = 2 })
+        H.eq(one(p, '1 0e04 SYNC').fields.pR, 'g500')
+        H.eq(one(p, '1 0e05 GO R 1 i 100').fields.e, 'PAYMENT'); H.eq(p.is, 5000)
+        H.eq(one(p, '1 0e06 GO R 1 g 500').kind, 'T'); H.eq(p.gil, 99500)
+    end)
+
+    H.it('all amounts 0 makes a category free; no funds needed, nothing charged', function()
+        configure({ G = { { cur = 'g', amount = 0 }, { cur = 'c', amount = 0 } } })
+        local p = L.player({ ki = { 'MEA_GATE_CRYSTAL' }, gil = 0, cp = 0 })
+        H.eq(one(p, '1 0e07 SYNC').fields.pG, 'f0')
+        H.eq(one(p, '1 0e08 GO G 2 f 0').fields.pay, 'f0'); H.eq(p.calls.delGil, nil); H.eq(p.calls.delCP, nil)
+        H.eq(one(L.player({ id = 777, ki = { 'MEA_GATE_CRYSTAL' } }), '1 0e09 GO G 2 g 1000').fields.e, 'PRICE')
+    end)
+
+    H.it('same-city free travel can be switched off by the server', function()
+        configure(nil, false)
+        local p = L.player({ hp = { 5 }, zone = 230 })
+        H.eq(offersOf(one(p, '1 0e0a SYNC').fields, 'H')(5), 'g1000+c100')
+        H.eq(one(p, '1 0e0b GO H 5 f 0').fields.e, 'PRICE'); H.eq(p.gil, 100000)
+        H.eq(one(p, '1 0e0c GO H 5 g 1000').kind, 'T'); H.eq(p.gil, 99000)
+    end)
+
+    H.it('invalid entries are rejected, logged, and fall back to that category default', function()
+        local bad = {
+            { H = { { cur = 'g', amount = -1 } } },
+            { H = { { cur = 'g', amount = 10.5 } } },
+            { H = { { cur = 'g', amount = 1000000000 } } },
+            { H = { { cur = 'g', amount = 0 / 0 } } },
+            { H = { { cur = 'g', amount = '1000' } } },
+            { H = { { cur = 'i', amount = 100 } } },          -- IS not allowed for Home Points
+            { R = { { cur = 'c', amount = 100 } } },          -- CP not allowed for Runic Portals
+            { H = { { cur = 'g', amount = 1 }, { cur = 'g', amount = 2 } } },
+            { H = { } },
+            { H = 'free' },
+            { H = { { cur = 'g', amount = 0 }, { cur = 'c', amount = 100 } } }, -- mixed free and paid
+            { H = { 1000 } },
+        }
+        for i, b in ipairs(bad) do
+            load()
+            local errors = configure(b)
+            H.eq(errors, 1, 'case ' .. i)
+            H.truthy(logs[1] and logs[1]:find('CONFIG ERROR prices.', 1, true), 'logged, case ' .. i)
+            local cat = next(b)
+            H.eq(S.encodeOffers(S.active.prices[cat]), S.encodeOffers(S.DEFAULT_PRICES[cat]), 'default kept, case ' .. i)
+        end
+    end)
+
+    H.it('one invalid category does not affect the valid ones', function()
+        local errors = configure({ H = { { cur = 'g', amount = -5 } }, S = { { cur = 'g', amount = 3000 } } })
+        H.eq(errors, 1)
+        H.eq(S.encodeOffers(S.active.prices.H), 'g1000+c100')
+        H.eq(S.encodeOffers(S.active.prices.S), 'g3000')
+    end)
+
+    H.it('invalid sameCityFree is rejected and stays true', function()
+        local errors = configure(nil, 'yes')
+        H.eq(errors, 1); H.eq(S.active.sameCityFree, true)
+        H.truthy(logs[1]:find('sameCityFree', 1, true))
+    end)
+
+    H.it('the shipped file validates without errors at load', function()
+        load()
+        H.eq(S.applyConfig(), 0)
+    end)
+end)
+
+-----------------------------------------------------------------------------
 H.describe('framing', function()
     H.it('splits long bodies into <=128 byte chunks with header (fits LSB Mes[150])', function()
         local frames = S.frame('abcd', 'S', string.rep('x', 400))

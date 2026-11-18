@@ -36,20 +36,36 @@ M.config =
 {
     commandName       = 'fpx',
     messageChannel    = 29,     -- xi.msg.channel.SYSTEM_3 in LSB
-    -- Final travel prices, confirmed by the project owner (Milestone 8 RC3).
-    -- One fixed price per category for every destination; travel within one
-    -- city (M.cityGroupOfZone) is free.
-    --   Home Points       1,000 gil or 100 conquest points
-    --   Survival Guides   1,000 gil or 100 conquest points
-    --   Gate Crystals     1,000 gil or 100 conquest points
-    --   Runic Portals     1,000 gil or 100 Imperial Standing
+    ---------------------------------------------------------------------
+    -- SERVER ADMINISTRATORS: TRAVEL PRICES (see docs/SERVER-MODULE.md)
+    --
+    -- One price per category, the same for every destination of that
+    -- category. Each category lists what a player may pay with:
+    --   cur = 'g' gil, 'c' conquest points (Home Points, Survival Guides,
+    --         Gate Crystals only), 'i' Imperial Standing (Runic Portals only)
+    --   amount = a whole number from 0 to 999999999
+    -- Remove a line to stop accepting that currency for the category.
+    -- Set every amount of a category to 0 to make that category free.
+    -- Changes take effect when the map server (re)loads this module; players
+    -- see the new prices at their next sync. Invalid entries are rejected at
+    -- load (logged as "[fpxport] CONFIG ERROR") and that category keeps the
+    -- released default price.
+    --
+    -- Defaults (owner-approved): Home Points, Survival Guides and Gate
+    -- Crystals 1,000 gil or 100 conquest points; Runic Portals 1,000 gil or
+    -- 100 Imperial Standing.
+    ---------------------------------------------------------------------
     prices =
     {
-        H = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
-        S = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
-        G = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
-        R = { { cur = 'g', amount = 1000 }, { cur = 'i', amount = 100 } },
+        H = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Home Points
+        S = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Survival Guides
+        G = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }, -- Gate Crystal teleports
+        R = { { cur = 'g', amount = 1000 }, { cur = 'i', amount = 100 } }, -- Runic Portals
     },
+    -- Travel between two zones of the same city (M.cityGroupOfZone) is free.
+    -- true (default) or false.
+    sameCityFree      = true,
+    ---------------------------------------------------------------------
     hereDistance      = 10,     -- yalms; "already there" threshold
     replaySize        = 8,
     replaySeconds     = 30,
@@ -539,21 +555,130 @@ local function copyOffers(list)
     return out
 end
 
+-----------------------------------
+-- Price configuration (1.2.0): validated once when the module loads
+-----------------------------------
+M.DEFAULT_PRICES =
+{
+    H = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
+    S = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
+    G = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } },
+    R = { { cur = 'g', amount = 1000 }, { cur = 'i', amount = 100 } },
+}
+
+-- Currencies a category may accept (they match the client's payment choices).
+M.ALLOWED_CURRENCIES =
+{
+    H = { g = true, c = true },
+    S = { g = true, c = true },
+    G = { g = true, c = true },
+    R = { g = true, i = true },
+}
+
+M.MAX_PRICE = 999999999 -- FPX/1 amounts have at most 9 digits
+
+-- Validates one category's configured list. Returns offers or nil, why.
+function M.validateCategory(cat, list)
+    if type(list) ~= 'table' then
+        return nil, 'must be a list of { cur = ..., amount = ... } entries'
+    end
+
+    local out, seen, zeros = {}, {}, 0
+
+    for i, o in ipairs(list) do
+        if type(o) ~= 'table' then
+            return nil, 'entry ' .. i .. ' is not a table'
+        end
+
+        local cur, amount = o.cur, o.amount
+
+        if not M.ALLOWED_CURRENCIES[cat][cur] then
+            return nil, 'entry ' .. i .. ': currency ' .. tostring(cur) .. ' is not allowed for this category'
+        end
+
+        if seen[cur] then
+            return nil, 'currency ' .. cur .. ' listed twice'
+        end
+
+        if type(amount) ~= 'number' or amount ~= amount or amount ~= math.floor(amount)
+            or amount < 0 or amount > M.MAX_PRICE then
+            return nil, 'entry ' .. i .. ': amount must be a whole number from 0 to ' .. M.MAX_PRICE
+        end
+
+        seen[cur] = true
+        zeros = zeros + ((amount == 0) and 1 or 0)
+        out[#out + 1] = { cur = cur, amount = amount }
+    end
+
+    if #out == 0 then
+        return nil, 'at least one currency is required'
+    end
+
+    if zeros > 0 and zeros < #out then
+        return nil, 'mixes free (0) and paid amounts; set every amount to 0 to make the category free'
+    end
+
+    if zeros == #out then
+        return { { cur = 'f', amount = 0 } } -- free category
+    end
+
+    return out
+end
+
+-- Builds M.active from M.config. Invalid parts keep the defaults and are
+-- logged. Returns the number of errors. Called at load; call again after
+-- changing M.config at runtime (e.g. from a module reload or a test).
+function M.applyConfig()
+    local errors = 0
+    local cfg = M.config
+    local active = { prices = {}, sameCityFree = true }
+
+    for _, cat in ipairs({ 'H', 'S', 'G', 'R' }) do
+        local list, why = M.validateCategory(cat, cfg.prices and cfg.prices[cat])
+
+        if list == nil then
+            errors = errors + 1
+            list = M.validateCategory(cat, M.DEFAULT_PRICES[cat])
+            pcall(M.log, string.format('[fpxport] CONFIG ERROR prices.%s: %s. Using the default price for this category.', cat, why))
+        end
+
+        active.prices[cat] = list
+    end
+
+    if cfg.sameCityFree == nil or type(cfg.sameCityFree) == 'boolean' then
+        active.sameCityFree = cfg.sameCityFree ~= false
+    else
+        errors = errors + 1
+        pcall(M.log, '[fpxport] CONFIG ERROR sameCityFree must be true or false. Using true.')
+    end
+
+    M.active = active
+    return errors
+end
+
 -- ctx caches per-request lookups. Returns the destination's offer list.
 function M.offers(player, cat, id, ctx)
     ctx = ctx or {}
 
-    local fixed = M.config.prices[cat]
+    if M.active == nil then
+        M.applyConfig()
+    end
+
+    local fixed = M.active.prices[cat]
     local dest  = M.destination(cat, id)
     if fixed == nil or not validDest(dest) then
         return { { cur = 'n', amount = 0 } }
+    end
+
+    if fixed[1].cur == 'f' then
+        return { { cur = 'f', amount = 0 } }
     end
 
     if ctx.origin == nil then
         ctx.origin = player:getZoneID()
     end
 
-    if M.sameCity(ctx.origin, dest[5]) then
+    if M.active.sameCityFree and M.sameCity(ctx.origin, dest[5]) then
         return { { cur = 'f', amount = 0 } }
     end
 
@@ -1299,6 +1424,9 @@ end
 -- Module registration (LSB module loader)
 -----------------------------------
 xi = xi or {}
+-- 1.2.0: validate the configured prices once at load (errors are logged).
+M.applyConfig()
+
 xi.fpxport = M
 
 M.command =

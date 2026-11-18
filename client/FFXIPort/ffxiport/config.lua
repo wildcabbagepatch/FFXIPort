@@ -62,6 +62,8 @@ C.DEFAULTS = T{
     scale              = 100,     -- 70..200, steps of 10
     button             = false,   -- floating button (later milestone)
     chat_level         = 'quiet', -- Milestone 6B: quiet | normal | debug
+    theme              = 'classic', -- 1.2.0: classic | squad | crimson
+    expansion          = 'all',   -- 1.2.0: all | base | roz | cop | toau (list filter)
     -- favourites = { ['hp:12'] = true, ... }   created per character, not here
     -- button_x, button_y                       optional, validated when present
 }
@@ -127,6 +129,10 @@ local function clean(k, v)
         return (v == 'gil' or v == 'is') and v or nil
     elseif k == 'chat_level' then
         return (v == 'quiet' or v == 'normal' or v == 'debug') and v or nil
+    elseif k == 'theme' then
+        return (v == 'classic' or v == 'squad' or v == 'crimson') and v or nil
+    elseif k == 'expansion' then
+        return (v == 'all' or v == 'base' or v == 'roz' or v == 'cop' or v == 'toau') and v or nil
     elseif k == 'scale' then
         return roundScale(v)
     end
@@ -356,7 +362,7 @@ function C.favourites()
     return out
 end
 
--- Floating button position (later milestone): x, y or nil.
+-- Floating button position (1.2.0): x, y or nil (nil = default position).
 function C.buttonPos()
     if S.live == nil or rawget(S.live, 'button_x') == nil then
         return nil
@@ -380,6 +386,17 @@ function C.setButtonPos(x, y)
     end
 
     S.live.button_x, S.live.button_y = x, y
+    save()
+    return true
+end
+
+-- 1.2.0: forget the saved floating-button position (back to the default).
+function C.resetButtonPos()
+    if not writable() or rawget(S.live, 'button_x') == nil then
+        return false
+    end
+
+    S.live.button_x, S.live.button_y = nil, nil
     save()
     return true
 end

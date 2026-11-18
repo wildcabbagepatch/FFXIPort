@@ -1,4 +1,4 @@
-﻿# executed 2026-11-18 03:05:47 +01:00 with Lua 5.4.6; exit code 0
+# executed 2026-11-18 14:45:07 +01:00 with Lua 5.4.6  Copyright (C) 1994-2023 Lua.org, PUC-Rio on FFXIPort 1.2.0; exit code 0
 PASS  registration > registers !fpx with permission 0 and a whole-line parameter
 PASS  registration > falls back to xi.commands when registerCommand is absent
 PASS  registration > declares onGameIn override that resets session on login only
@@ -62,9 +62,19 @@ PASS  transaction outcomes > replay of a corrected request returns only the fina
 PASS  transaction outcomes > replay of a failed pre-charge request never executes it later
 PASS  transaction outcomes > CP and Imperial Standing debits and refunds follow the same rules
 PASS  transaction outcomes > fault matrix: consistent final outcome, no unpaid travel, no unreported loss
+PASS  configurable prices > the shipped configuration is valid and equals the owner-approved defaults
+PASS  configurable prices > custom prices are synchronised and charged
+PASS  configurable prices > a client with the old price is refused (PRICE) and nothing is charged
+PASS  configurable prices > a currency can be removed from a category
+PASS  configurable prices > all amounts 0 makes a category free; no funds needed, nothing charged
+PASS  configurable prices > same-city free travel can be switched off by the server
+PASS  configurable prices > invalid entries are rejected, logged, and fall back to that category default
+PASS  configurable prices > one invalid category does not affect the valid ones
+PASS  configurable prices > invalid sameCityFree is rejected and stays true
+PASS  configurable prices > the shipped file validates without errors at load
 PASS  framing > splits long bodies into <=128 byte chunks with header (fits LSB Mes[150])
 PASS  framing > a maximum-size body (2048) needs exactly 16 frames of at most 150 bytes
 PASS  framing > every frame of a fully unlocked snapshot fits the 150-byte chat field
 PASS  framing > adler32 matches the published reference value
 PASS  framing > bitmap encoding
-server: 68 passed, 0 failed, 68 total
+server: 78 passed, 0 failed, 78 total

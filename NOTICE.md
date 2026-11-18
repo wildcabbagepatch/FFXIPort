@@ -2,7 +2,7 @@
 
 ## FFXIPort
 
-FFXIPort 1.1.0 — Copyright (C) 2026 wildthing.
+FFXIPort (1.1.0 and 1.2.0) — Copyright (C) 2026 wildthing.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -39,6 +39,7 @@ player's own game client at runtime.
 | Ashita v4 API usage (events, `AshitaCore`, settings library, ImGui bindings) | client | Interoperability with Ashita. No Ashita code is included. |
 | Home Point location suffixes (E / A / M) | `client/FFXIPort/ffxiport/homepoint_suffix_data.lua` | Designations originally taken from BG-Wiki's "Home Point" page (per that file's header). The project owner later checked all 35 by hand against what FINAL FANTASY XI itself displays. **Rights question still open, see below.** |
 | GNU GPL v3 text | `LICENSE` | © Free Software Foundation; verbatim copying permitted. |
+| "Squad" theme colours (1.2.0) | `client/FFXIPort/ffxiport/ui/theme.lua` | Colour choices matched to screenshots of XI: Forever Offline's Squad window and to colour values stated by the project owner (e.g. `#11131B`, `#E3BD66`). No Squad code, rendering function or asset is included, and FFXIPort does not depend on Squad. The reference material stays local and is not distributed. |
 
 ## Open release questions (not cleared)
 

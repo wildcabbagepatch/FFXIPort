@@ -680,6 +680,7 @@ H.describe('travel: refusals and currency safety', function ()
     H.it('price changed on the server: PRICE refusal, nothing charged, prices refreshed', function ()
         synced({ hp = { 9 } })
         SRV.config.prices.H[1].amount = 1200 -- server-side price change after the sync
+        SRV.applyConfig()                     -- as on a module reload
         local n = #W.sent
         local r = goAndWait('hp', rowOf('hp', 9), 'gil')
         H.eq(r.fields.e, 'PRICE'); H.eq(W.player.gil, 100000)
@@ -687,6 +688,7 @@ H.describe('travel: refusals and currency safety', function ()
         H.truthy(#W.sent >= n + 2, 'refresh sync requested')
         H.eq(travel.priceText(travel.quote('hp', rowOf('hp', 9), 230, 'gil')), '1,200 gil')
         SRV.config.prices.H[1].amount = 1000
+        SRV.applyConfig()
     end)
 
     H.it('state refusal (engaged) charges nothing', function ()
@@ -995,6 +997,18 @@ H.describe('pricing in the client', function ()
         H.eq(travel.priceText(travel.quote('hp', rowOf('hp', 5), 230, 'gil')), 'Free')
         H.eq(travel.priceText(travel.quote('hp', rowOf('hp', 0), 230, 'cp')), 'Free')
         H.eq(travel.priceText(travel.quote('sg', rowOf('sg', 0), 230, 'gil')), 'Free')
+    end)
+
+    H.it('custom server prices reach the client preview and are what the client sends', function ()
+        SRV.config.prices.S = { { cur = 'g', amount = 2500 }, { cur = 'c', amount = 40 } }
+        SRV.applyConfig()
+        synced({ sg = { 6 }, zone = 230 })
+        H.eq(travel.priceText(travel.quote('sg', rowOf('sg', 6), 230, 'gil')), '2,500 gil')
+        H.eq(travel.priceText(travel.quote('sg', rowOf('sg', 6), 230, 'cp')), '40 CP')
+        local r = goAndWait('sg', rowOf('sg', 6), 'cp')
+        H.eq(r.kind, 'T'); H.truthy(W.sent[#W.sent]:match('GO S 6 c 40$')); H.eq(W.player.cp, 4960)
+        SRV.config.prices.S = { { cur = 'g', amount = 1000 }, { cur = 'c', amount = 100 } }
+        SRV.applyConfig()
     end)
 
     H.it("from Chateau d'Oraguille (no Home Point) San d'Oria is free and other cities are paid", function ()

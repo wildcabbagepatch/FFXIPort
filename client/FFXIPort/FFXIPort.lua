@@ -1,5 +1,5 @@
 --[[
-* FFXIPort (independent frontend) - 1.1.0 (history: CHANGELOG.md)
+* FFXIPort (independent frontend) - 1.2.0 (history: CHANGELOG.md)
 * Project: XI: Forever Offline
 * Copyright (C) 2026 wildthing
 * SPDX-License-Identifier: GPL-3.0-only
@@ -20,7 +20,7 @@
 
 addon.name    = 'FFXIPort';
 addon.author  = 'wildthing';
-addon.version = '1.1.0';
+addon.version = '1.2.0';
 addon.desc    = 'FFXIPort independent frontend - travel, favourites, quiet chat.';
 addon.link    = '';
 
@@ -625,6 +625,14 @@ local function printStatus()
         tostring(cs.lastCheck.at), cs.lastCheck.fixed, cs.lastCheck.pruned, cs.switches, cs.saves,
         window.isOpen() and 'open' or 'closed'));
 
+    -- 1.2.0 UI preferences and whether text scaling works in this client.
+    local bx, by = config.buttonPos();
+    out(string.format('UI: theme %s, scale %d%% (text scaling: %s), expansion filter %s, floating button %s%s',
+        tostring(window.pref('theme')), tonumber(window.pref('scale')) or 100,
+        theme.fontScaling == true and 'yes' or (theme.fontScaling == false and ('NO - ' .. tostring(theme.fontError)) or 'not drawn yet'),
+        tostring(window.pref('expansion')), window.pref('button') == true and 'on' or 'off',
+        bx and string.format(' at %d,%d', bx, by) or ''));
+
     local ts = travel.status();
     out(string.format('Travel: %s%s   session %d   last: %s',
         ts.state, ts.trip and (' (' .. ts.trip.tag .. ' rid ' .. tostring(ts.trip.rid) .. ' ' .. tostring(ts.trip.command) .. ')') or '',
@@ -746,6 +754,7 @@ local function newSession(reason)
     model.clear();
     syncctl.resetSession();
     window.resetSelection(); -- selections are session-only (Milestone 5A)
+    window.resetCharacterState(); -- rc.2: no UI state carries over to the next character
     chatlog.setTrace(false); -- the diagnostic trace is session-only (6B); drops held lines; chat_level is kept
     echo.clear();            -- 6B.1: no expected echo survives a logout or character switch
     note('Session reset (' .. reason .. '): previous sync data cleared.', 'session');

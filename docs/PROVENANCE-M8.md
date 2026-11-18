@@ -82,3 +82,40 @@ Access chronology: `docs/CLEANROOM.md`.
 * **New in 1.1.0:** `tests/client/test_addon_smoke.lua`, `tests/lib/packets.lua`,
   `tools/gen_catalog.lua`, `tools/catalog_facts.lua`, README.md, INSTALL.md,
   CHANGELOG.md, NOTICE.md, docs/CATALOGUE.md, docs/RELEASE-READINESS.md.
+## 1.2.0-rc.1 — UI and server-pricing update (local release candidate)
+
+* **Baseline.** The workspace matched the published 1.1.0 source package byte
+  for byte (0 differences against its `MANIFEST.sha256`) before any change.
+  It is not a Git repository; nothing was committed or pushed.
+* **Sources used.** The 1.1.0 FFXIPort source; Ashita v4's public SDK and Lua
+  library (`plugins/sdk/imgui.h`, `addons/libs/imgui.lua`: Dear ImGui 1.92.3,
+  `addons/crosshair/crosshair.lua` for the draw-list call style; read from
+  github.com/AshitaXI/Ashita-v4beta to confirm which ImGui functions exist);
+  the project owner's local design references for the Squad theme
+  (screenshots, plus the reference Lua file for colour values only). No
+  Driftwood/dwport source, legacy frontend, superseded server module or old
+  protocol was consulted.
+* **New files:** `client/FFXIPort/ffxiport/ui/widgets.lua`,
+  `tests/client/test_ui.lua`, `tests/lib/imgui_mock.lua`, `docs/UI.md`,
+  `docs/TEST-RESULTS-1.2.0.md`, `docs/ACCEPTANCE-1.2.0.md`, `.gitignore`
+  (all GPL-3.0-only, © 2026 wildthing).
+* **Modified:** `FFXIPort.lua`, `ffxiport/config.lua`, `ffxiport/ui/{theme,rows,window}.lua`,
+  `server/modules/custom/late/fpxport.lua` (price validation only), tests and
+  documentation. FPX/1, catalogue and travel rules are unchanged.
+* **Not distributed:** `design-references/` (excluded by `.gitignore` and
+  by `tools/build_release.ps1`).
+## 1.2.0-rc.2 — stabilization
+
+Changes in `client/FFXIPort/ffxiport/ui/window.lua` (floating-button host
+window style; per-character state reset; pre-login overrides only while
+logged out) and `client/FFXIPort/FFXIPort.lua` (session reset, version),
+plus tests (`tests/client/test_ui.lua`, `tests/lib/imgui_mock.lua`) and
+documentation. Sources: the owner's in-game findings and review reports
+(text), the existing FFXIPort source, and Ashita's ImGui 1.92.3 header
+(`ImGuiWindowFlags_NoBackground`, `ImGuiStyleVar_WindowMinSize`). No legacy,
+Driftwood or dwport material was consulted.
+## 1.2.0 — release
+
+Functionally identical to 1.2.0-rc.2. Only the version identifier in
+`client/FFXIPort/FFXIPort.lua` and the release documentation changed. No new
+sources were consulted.

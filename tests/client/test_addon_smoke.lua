@@ -109,7 +109,7 @@ local ok, err = pcall(dofile, root .. '/client/FFXIPort/FFXIPort.lua')
 H.it('addon entry point loads with Ashita stubs', function ()
     H.truthy(ok, tostring(err))
     H.eq(addon.name, 'FFXIPort')
-    H.truthy(addon.version:match('^1%.1%.0'))
+    H.truthy(addon.version:match('^1%.2%.0'))
 end)
 
 if not ok then

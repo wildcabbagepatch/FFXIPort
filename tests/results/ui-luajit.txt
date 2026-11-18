@@ -1,0 +1,42 @@
+# executed 2026-11-18 14:45:07 +01:00 with LuaJIT 2.1.1720049189 -- Copyright (C) 2005-2023 Mike Pall. https://luajit.org/ on FFXIPort 1.2.0; exit code 0
+PASS  defaults and settings > defaults: Classic, 100 %, All expansions, floating button hidden
+PASS  defaults and settings > invalid stored values fall back to safe defaults without errors
+PASS  defaults and settings > a settings file without the new keys (1.1.0) loads with defaults and keeps favourites
+PASS  defaults and settings > settings are isolated per character and survive a reload
+PASS  themes > Classic keeps the 1.1.0 colours and the native title bar
+PASS  themes > clicking the dots switches the whole theme immediately and saves it
+PASS  themes > every theme defines every colour the UI uses, with readable status colours
+PASS  themes > theme dots have tooltips and a ring marks the active one
+PASS  themes > themes never leak: all pushes are popped, also when rendering fails
+PASS  UI scaling > options popover: + / - / 100 % change the scale live, within 70..200
+PASS  UI scaling > fonts are scaled (PushFont base * scale) and paddings follow at 70 / 100 / 200 %
+PASS  UI scaling > the star and dots follow the scale (sized from the font)
+PASS  UI scaling > controls fit or wrap at every scale and window width (no overflow)
+PASS  UI scaling > if the font cannot be pushed, sizes still scale and the limitation is reported
+PASS  expansion filter > filters rows by expansion, keeps order, and combines with search and usable-only
+PASS  expansion filter > applies to Favorites without changing them; empty results are handled
+PASS  expansion filter > combo selection is saved per character and shows counts in tab labels
+PASS  expansion filter > does not modify unlock information
+PASS  favourite star > outline when off, filled when on; click toggles and persists
+PASS  favourite star > hover shows a preview and a tooltip; a star click never selects the row
+PASS  favourite star > the empty Favorites text no longer refers to "*"
+PASS  floating button > enabled from the options popover; hidden again when disabled
+PASS  floating button > click toggles the main window; works while the main window is closed
+PASS  floating button > drag moves it, saves the position on release, and does not toggle
+PASS  floating button > does not take focus or navigation and is not saved to imgui.ini
+PASS  floating button > scales with the UI and uses the theme for the button itself
+PASS  floating button > rc.2: no visible host window around the button, in every theme and scale
+PASS  floating button > rc.2: the host-window style does not leak to the main window or other windows
+PASS  floating button > rc.2: click toggles; drag never toggles; a click after a drag toggles again
+PASS  floating button > rc.2: switching characters without a reload uses each character's own position
+PASS  floating button > rc.2: a drag in progress during a character switch is discarded
+PASS  floating button > rc.2: logout and login transitions are safe
+PASS  rc.2: settings before login > a theme chosen before login does not override the character's saved theme
+PASS  rc.2: settings before login > pre-login scale, filter and floating-button choices do not leak either
+PASS  rc.2: settings before login > a new character (no saved theme) gets Classic, not the pre-login choice
+PASS  rc.2: settings before login > changes after login are saved to the logged-in character
+PASS  rc.2: settings before login > layer check: an override left in place is ignored while a character is logged in
+PASS  rc.2: settings before login > layer check: after saving a drag, the saved position is used (no lingering runtime position)
+PASS  rc.2: settings before login > favourites and saved settings survive the pre-login session
+PASS  rc.2: settings before login > reset position returns to the default
+ui (mocked ImGui): 40 passed, 0 failed, 40 total

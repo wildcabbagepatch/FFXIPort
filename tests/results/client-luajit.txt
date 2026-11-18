@@ -1,4 +1,4 @@
-﻿# executed 2026-11-18 03:05:47 +01:00 with LuaJIT 2.1.1720049189; exit code 0
+# executed 2026-11-18 14:45:06 +01:00 with LuaJIT 2.1.1720049189 -- Copyright (C) 2005-2023 Mike Pall. https://luajit.org/ on FFXIPort 1.2.0; exit code 0
 PASS  codec > adler32 reference value and offers/bitmap parsing
 PASS  codec > request lines match the server grammar
 PASS  codec > body parsing rejects duplicate keys and wrong version
@@ -64,8 +64,9 @@ PASS  rapid addon reload (request id reuse) > GO: reloaded client reusing a requ
 PASS  rapid addon reload (request id reuse) > a genuine retransmission in the same session is still replayed (no double charge)
 PASS  pricing in the client > client quotes equal the server offers for every catalogue destination
 PASS  pricing in the client > confirmed prices are displayed; same-city destinations show Free
+PASS  pricing in the client > custom server prices reach the client preview and are what the client sends
 PASS  pricing in the client > from Chateau d'Oraguille (no Home Point) San d'Oria is free and other cities are paid
 PASS  quiet chat and echo suppression > own FPX request echoes are hidden in quiet only
 PASS  quiet chat and echo suppression > frames never reach chat; protocol info only in debug
 PASS  favourites and per-character settings > favourites and payment method persist per character
-client: 69 passed, 0 failed, 69 total
+client: 70 passed, 0 failed, 70 total

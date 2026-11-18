@@ -1,8 +1,19 @@
-# Installing FFXIPort 1.1.0
+# Installing FFXIPort 1.2.0
 
 FFXIPort has two parts and both are needed: the **server module** (installed
 once on the XI: Forever Offline server) and the **Ashita addon** (installed by
 each player). Install both from the same release.
+
+## Installation via XI: Forever Offline launcher
+
+FFXIPort is available in the XI: Forever Offline launcher's **OTHER** tab.
+Find **FFXIPort**, choose **Install** or **Reinstall / update**, then enable
+it under **ADDONS → Addons to load**. The launcher indicates that the
+server-side component ships with XI: Forever Offline.
+
+The launcher may offer a different version from this GitHub release. For
+manual installations, updates to a custom server, or a specific version,
+follow the instructions below and use matching client and server files.
 
 ## 1. Server module
 
@@ -26,7 +37,7 @@ You need access to the server's files (the folder that contains `modules/`,
 
    If you are unsure, moving the file out of `modules/` works in both cases.
    The old and new modules use different files, names and commands, so having
-   both loaded causes no conflict. But FFXIPort 1.1.0 cannot use the old one,
+   both loaded causes no conflict. But FFXIPort 1.1.0 and later cannot use the old one,
    so keeping it serves no purpose.
 3. **Copy** `server/modules/custom/late/fpxport.lua` from this package to the
    server's `modules/custom/late/fpxport.lua`.
@@ -39,10 +50,16 @@ You need access to the server's files (the folder that contains `modules/`,
 
 5. **Start the map server** and check its log for errors mentioning
    `fpxport`. The module changes no SQL, no core files and no other scripts.
-6. Optional: prices are in the `M.config.prices` table at the top of
-   `fpxport.lua`. The released values are 1,000 gil or 100 Conquest Points
+6. Optional: change the prices in the `SERVER ADMINISTRATORS: TRAVEL PRICES`
+   block at the top of `fpxport.lua` (`M.config.prices`, `sameCityFree`),
+   then restart the map server. The defaults are 1,000 gil or 100 Conquest Points
    (Home Points, Survival Guides, Gate Crystals) and 1,000 gil or 100
-   Imperial Standing (Runic Portals); same-city travel is free.
+   Imperial Standing (Runic Portals); same-city travel is free. Invalid values
+   are logged as `[fpxport] CONFIG ERROR` and the category keeps its default.
+   Full rules: `docs/SERVER-MODULE.md` -> *Changing prices*.
+
+   **Updating from 1.1.0:** if you changed prices in 1.1.0's `fpxport.lua`,
+   copy your values into the same block of the new file before replacing it.
 
 Operators: after testing, search the map-server log for `CURRENCY INCIDENT`.
 There should be none. Each such line identifies a trip whose payment outcome
@@ -58,13 +75,16 @@ the server could not confirm (see `docs/SERVER-MODULE.md`).
 4. Copy the `FFXIPort` folder from this package's `client/` folder to
    `Ashita/addons/`. You should now have `Ashita/addons/FFXIPort/FFXIPort.lua`.
 5. In game: `/addon load FFXIPort`. You should see
-   `FFXIPort 1.1.0 loaded. /port opens the window, /port sync synchronizes.`
+   `FFXIPort 1.2.0 loaded. /port opens the window, /port sync synchronizes.`
 6. To load it automatically, add `/addon load FFXIPort` to your Ashita
    startup script (for example `Ashita/scripts/default.txt`).
 
 Your per-character settings and favourites (Ashita settings alias
 `ffxiport_independent`, stored by Ashita's settings library under its
 configuration folder, not inside the addon folder) are kept across the update.
+1.2.0 adds a theme and an expansion filter setting; existing characters start
+with Classic, 100 % scale, all expansions and no floating button, exactly as
+before.
 
 ## 3. Check that it works
 
