@@ -1,0 +1,5 @@
+﻿# executed 2026-11-18 03:05:47 +01:00 with LuaJIT 2.1.1720049189: regenerated catalogue (v7) compared with the previous catalogue (v6), verification only
+DIFF city zone 48 old 7 new nil
+DIFF city zone 71 only in new (7)
+counts old hp 104 sg 77 sp 6 rp 6 | new hp 104 sg 77 sp 6 rp 6
+differences: 2

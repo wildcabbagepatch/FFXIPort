@@ -1,0 +1,70 @@
+﻿# executed 2026-11-18 03:05:47 +01:00 with LuaJIT 2.1.1720049189; exit code 0
+PASS  registration > registers !fpx with permission 0 and a whole-line parameter
+PASS  registration > falls back to xi.commands when registerCommand is absent
+PASS  registration > declares onGameIn override that resets session on login only
+PASS  SYNC > returns a complete, checksummed snapshot on SYSTEM_3
+PASS  SYNC > frames are sent on SYSTEM_3 (channel 29)
+PASS  SYNC > reports a travel block in ok
+PASS  SYNC > body fits protocol limits even with everything unlocked
+PASS  SYNC > rate-limits SYNC to 6 per 10 s
+PASS  final pricing (owner-confirmed) > category defaults: 1,000 gil / 100 CP (H, S, G) and 1,000 gil / 100 IS (R)
+PASS  final pricing (owner-confirmed) > the same price applies to every eligible Home Point (no fee multipliers)
+PASS  final pricing (owner-confirmed) > key items no longer change prices (no Rhapsody discount, no Captain free portals)
+PASS  final pricing (owner-confirmed) > each category charges the exact confirmed price in each currency
+PASS  final pricing (owner-confirmed) > wrong payment method for a category is refused without charge
+PASS  final pricing (owner-confirmed) > expected-price mismatch is refused with the current offer
+PASS  same-city free travel > city table: four nation cities, Chateau and Heavens Tower included, Al Zahbi not
+PASS  same-city free travel > snapshot offers f0 for same-city destinations and the fixed price elsewhere
+PASS  same-city free travel > free trip charges nothing and needs no funds
+PASS  same-city free travel > a city zone without a Home Point qualifies as origin (Chateau, Heavens Tower)
+PASS  same-city free travel > free Survival Guide inside the city
+PASS  same-city free travel > travel between different cities and from a city to outside stays paid
+PASS  same-city free travel > paying for a free trip is refused (PRICE), nothing charged
+PASS  same-city free travel > unlock and state checks still apply to free trips
+PASS  request validation > version mismatch answers E VERSION with sv=1
+PASS  request validation > unparseable RID answers with rid 0000 BADREQ
+PASS  request validation > rejects malformed GO arguments
+PASS  request validation > rejects control characters and a nil line
+PASS  refusals never cost currency > unknown destination
+PASS  refusals never cost currency > locked destination
+PASS  refusals never cost currency > insufficient funds for every currency
+PASS  refusals never cost currency > character state and zone restrictions
+PASS  refusals never cost currency > already at destination
+PASS  refusals never cost currency > cooldown after accepted travel
+PASS  duplicates and replay > repeated successful GO replays T without charging or moving again
+PASS  duplicates and replay > repeated SYNC with the same RID replays the identical snapshot
+PASS  duplicates and replay > replay entries expire after 30 s and the cache is bounded to 8 RIDs
+PASS  duplicates and replay > separate characters have separate sessions
+PASS  client session id and replay scope > requests without a valid session id are refused
+PASS  client session id and replay scope > SYNC: same request id from a reloaded session gets a fresh snapshot
+PASS  client session id and replay scope > GO: same request id from a reloaded session is executed as a new trip, not replayed
+PASS  client session id and replay scope > GO: colliding request id, new session, different destination after the cooldown
+PASS  client session id and replay scope > intentional replay (same session, same id) still never charges twice
+PASS  client session id and replay scope > rate limit and cooldown are shared by all sessions of a character
+PASS  transaction outcomes > normal paid trip: one final T, charged once, moved
+PASS  transaction outcomes > normal free trip: one final T with pay=f0
+PASS  transaction outcomes > failure before deduction (validation raises): INTERNAL, no debit attempted
+PASS  transaction outcomes > currency API raises before taking currency: INTERNAL, nothing charged
+PASS  transaction outcomes > currency API raises after taking currency: refund confirmed, INTERNAL
+PASS  transaction outcomes > currency API raises after taking currency and the refund fails: UNSURE + incident, no "refunded" notice
+PASS  transaction outcomes > currency API raises and the balance is unreadable: UNSURE + incident with context, no guessed refund
+PASS  transaction outcomes > reading post-charge balances fails: trip completes, charged once, derived balance in T
+PASS  transaction outcomes > sending the accepted response fails: trip completes, replay does not recharge
+PASS  transaction outcomes > setPos fails before moving: T, then correction E INTERNAL for the same rid, refund confirmed
+PASS  transaction outcomes > setPos raises after the move took effect: T stands, charged once, no refund
+PASS  transaction outcomes > setPos raises while zoning to the destination has started: T stands
+PASS  transaction outcomes > setPos raises and the move state is unreadable: T then E UNSURE, incident, no refund
+PASS  transaction outcomes > setPos fails and the refund raises: E UNSURE, incident, never "payment refunded"
+PASS  transaction outcomes > setPos fails and the refund cannot be verified (balance unreadable): E UNSURE
+PASS  transaction outcomes > refund call raises after crediting: the balance proves it, E INTERNAL
+PASS  transaction outcomes > free trip whose setPos fails: E INTERNAL, nothing charged, no incident
+PASS  transaction outcomes > replay of a corrected request returns only the final E, never re-executes
+PASS  transaction outcomes > replay of a failed pre-charge request never executes it later
+PASS  transaction outcomes > CP and Imperial Standing debits and refunds follow the same rules
+PASS  transaction outcomes > fault matrix: consistent final outcome, no unpaid travel, no unreported loss
+PASS  framing > splits long bodies into <=128 byte chunks with header (fits LSB Mes[150])
+PASS  framing > a maximum-size body (2048) needs exactly 16 frames of at most 150 bytes
+PASS  framing > every frame of a fully unlocked snapshot fits the 150-byte chat field
+PASS  framing > adler32 matches the published reference value
+PASS  framing > bitmap encoding
+server: 68 passed, 0 failed, 68 total

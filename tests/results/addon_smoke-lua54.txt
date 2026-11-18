@@ -1,0 +1,11 @@
+﻿# executed 2026-11-18 03:05:47 +01:00 with Lua 5.4.6; exit code 0
+PASS  addon entry point loads with Ashita stubs
+PASS  addon flow > automatic initial sync over 0x017 packets; frames hidden from chat
+PASS  addon flow > /port status explains the counts and reports uncatalogued unlocked destinations
+PASS  addon flow > the once-per-session scope notice was shown after the first sync
+PASS  addon flow > /port catalog verifies the regenerated catalogue
+PASS  addon flow > /port sync after a gil change shows the new balance in the model
+PASS  addon flow > other commands still respond
+PASS  addon flow > ordinary chat packets are not blocked
+PASS  addon flow > unload runs cleanly
+addon smoke: 9 passed, 0 failed, 9 total

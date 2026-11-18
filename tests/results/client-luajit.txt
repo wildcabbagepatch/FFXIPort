@@ -1,0 +1,71 @@
+﻿# executed 2026-11-18 03:05:47 +01:00 with LuaJIT 2.1.1720049189; exit code 0
+PASS  codec > adler32 reference value and offers/bitmap parsing
+PASS  codec > request lines match the server grammar
+PASS  codec > body parsing rejects duplicate keys and wrong version
+PASS  startup synchronization > one initial sync after readiness settles, committed atomically to the model
+PASS  startup synchronization > every catalogue row resolves to a protocol id
+PASS  startup synchronization > catalogue zones agree with the server destinations
+PASS  zone changes and character switching > auto re-sync after a completed zone change once answered
+PASS  zone changes and character switching > fallback-released zone episodes do not auto sync
+PASS  zone changes and character switching > snapshot for another character is rejected and previous data kept
+PASS  zone changes and character switching > session reset clears data and starts a new initial sync
+PASS  invalid, stale and duplicate responses > checksum failure is discarded; timeout and one retry follow; data never half-applied
+PASS  invalid, stale and duplicate responses > a structurally valid but semantically invalid snapshot is refused
+PASS  invalid, stale and duplicate responses > out-of-order and duplicated frames still assemble
+PASS  invalid, stale and duplicate responses > conflicting duplicate discards the response
+PASS  invalid, stale and duplicate responses > a delayed reply to an old request id is ignored
+PASS  invalid, stale and duplicate responses > no response at all: timeout, one retry, then give up
+PASS  invalid, stale and duplicate responses > duplicate sync requests are refused while one is outstanding
+PASS  bounds > oversize frame lines are dropped
+PASS  bounds > too many frames, oversize bodies and bad numbering are rejected
+PASS  bounds > server frames never exceed the 150-byte LSB chat message field
+PASS  live 0x017 reception > fixture matches the observed packet: own name as sender, mode 29, frame text at 0x17
+PASS  live 0x017 reception > reads a 150-byte message that has no terminating NUL
+PASS  live 0x017 reception > full startup sync through the packet handler with the local name as sender; frames hidden
+PASS  live 0x017 reception > the in-game failure: RC4 rejected own-name frames (regression)
+PASS  live 0x017 reception > empty-sender frames are still accepted
+PASS  live 0x017 reception > wrong sender: not trusted, not blocked, counted as foreign
+PASS  live 0x017 reception > a sender that differs only in case is not trusted
+PASS  live 0x017 reception > wrong channel: own say, tell or party lines are never protocol frames
+PASS  live 0x017 reception > unknown local name: own-name frames are not trusted (no guessing)
+PASS  live 0x017 reception > out-of-order and duplicated packets assemble once
+PASS  live 0x017 reception > wrong request id: hidden protocol noise, never applied
+PASS  live 0x017 reception > bad checksum on the trusted channel is rejected (no partial apply)
+PASS  live 0x017 reception > malformed or forged-looking frame text is blocked as noise and changes nothing
+PASS  live 0x017 reception > ordinary chat is never blocked: other players, own say, server notices
+PASS  live 0x017 reception > travel works end to end through the packet handler with the own-name sender
+PASS  version mismatch > a frame of another version stops automatic sync
+PASS  version mismatch > server E VERSION is handled the same way
+PASS  travel: all categories and payment methods > Home Point with gil and with CP; price text from server offers
+PASS  travel: all categories and payment methods > free Home Point inside the city group sends f 0
+PASS  travel: all categories and payment methods > Survival Guide with CP
+PASS  travel: all categories and payment methods > Gate Crystal with gil (protocol id from crystal name)
+PASS  travel: all categories and payment methods > Runic Portal with Imperial Standing and with gil
+PASS  travel: refusals and currency safety > insufficient funds: refused, nothing charged, balance shown
+PASS  travel: refusals and currency safety > price changed on the server: PRICE refusal, nothing charged, prices refreshed
+PASS  travel: refusals and currency safety > state refusal (engaged) charges nothing
+PASS  travel: refusals and currency safety > locked destinations cannot be submitted locally
+PASS  travel: refusals and currency safety > a second trip while one is outstanding is refused locally
+PASS  travel: failed or interrupted > no answer: unknown outcome, never retried, refresh sync lifts the block
+PASS  travel: failed or interrupted > zone change before the answer: unknown, a later reply is not applied
+PASS  travel: failed or interrupted > queued trip is cancelled when a zone change starts before sending
+PASS  travel: failed or interrupted > server-side move failure: correction E INTERNAL ends the accepted trip as failed + refunded
+PASS  travel: final outcome and corrections > correction E UNSURE: uncertain outcome, reconciliation required, never success or refund
+PASS  travel: final outcome and corrections > E UNSURE without a prior T (debit outcome unknown): uncertain, reconciliation required
+PASS  travel: final outcome and corrections > an unreadable correction makes the outcome uncertain, not successful
+PASS  travel: final outcome and corrections > a lost correction for a cross-zone trip is never reported as success
+PASS  travel: final outcome and corrections > same-zone destination completes after the correction window without a zone change
+PASS  travel: final outcome and corrections > a duplicate T inside the correction window changes nothing
+PASS  travel: final outcome and corrections > a correction arriving after the zone change started is ignored (window closed)
+PASS  rapid addon reload (request id reuse) > two fresh loads in the same second get different session ids
+PASS  rapid addon reload (request id reuse) > a session reset within one load also gets a new session id
+PASS  rapid addon reload (request id reuse) > SYNC: reloaded client reusing a request id gets the current balances, not the old replay
+PASS  rapid addon reload (request id reuse) > GO: reloaded client reusing a request id travels as a new trip and is charged once for it
+PASS  rapid addon reload (request id reuse) > a genuine retransmission in the same session is still replayed (no double charge)
+PASS  pricing in the client > client quotes equal the server offers for every catalogue destination
+PASS  pricing in the client > confirmed prices are displayed; same-city destinations show Free
+PASS  pricing in the client > from Chateau d'Oraguille (no Home Point) San d'Oria is free and other cities are paid
+PASS  quiet chat and echo suppression > own FPX request echoes are hidden in quiet only
+PASS  quiet chat and echo suppression > frames never reach chat; protocol info only in debug
+PASS  favourites and per-character settings > favourites and payment method persist per character
+client: 69 passed, 0 failed, 69 total
